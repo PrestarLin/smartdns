@@ -6,27 +6,27 @@ on:
       - master
       
 jobs:
-  get-version:
-    name: get latest version number
-    runs-on: ubuntu-latest
-    outputs:
-      CUR_VERSION: ${{steps.get-version.outputs.CUR_VERSION}}
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: VERSION_CONTROL
-        fetch-depth: 1
-        path: version_control
-    - name: get version
-      id: get-version
-      run: |
-          #获取当前版本号
-          pre_version=$(cat version_control/VERSION | grep "PREFEX" | sed 's/PREFEX=\(.*\)/\1/')
-          cur_version=$(cat version_control/VERSION | grep "CUR_VERS" | sed 's/CUR_VERS=\(.*\)/\1/')
-          echo "CUR_VERSION=$pre_version$cur_version" >> $GITHUB_OUTPUT
+  # get-version:
+  #   name: get latest version number
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     CUR_VERSION: ${{steps.get-version.outputs.CUR_VERSION}}
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       ref: VERSION_CONTROL
+  #       fetch-depth: 1
+  #       path: version_control
+  #   - name: get version
+  #     id: get-version
+  #     run: |
+  #         #获取当前版本号
+  #         pre_version=$(cat version_control/VERSION | grep "PREFEX" | sed 's/PREFEX=\(.*\)/\1/')
+  #         cur_version=$(cat version_control/VERSION | grep "CUR_VERS" | sed 's/CUR_VERS=\(.*\)/\1/')
+  #         echo "CUR_VERSION=$pre_version$cur_version" >> $GITHUB_OUTPUT
 
   build: 
-    needs: get-version
+    # needs: get-version
     strategy:
       matrix:
         include:
