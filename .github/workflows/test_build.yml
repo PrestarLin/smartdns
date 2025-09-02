@@ -51,7 +51,7 @@ jobs:
           cd ${{ github.workspace }}
           mkdir -p ${{ github.workspace }}/build
           #修改版本号
-          sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" ${{ github.workspace }}/package/build-pkg.sh
+          # sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" ${{ github.workspace }}/package/build-pkg.sh
           ./package/build-pkg.sh \
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
