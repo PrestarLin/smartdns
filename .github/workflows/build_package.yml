@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         # 基础平台和架构组合（排除luci，单独配置）
@@ -19,22 +19,22 @@ jobs:
             arch: armhf
           - platform: debian
             arch: amd64
-          - platform: linux
-            arch: arm64
-          - platform: linux
-            arch: armhf
-          - platform: linux
-            arch: x86-64
-          - platform: luci  # luci平台强制使用all架构（源码中定义）
-            arch: all
-          - platform: luci-compat
-            arch: all
-          - platform: openwrt
-            arch: arm64
-          - platform: openwrt
-            arch: armhf
-          - platform: openwrt
-            arch: x86-64
+          # - platform: linux
+          #   arch: arm64
+          # - platform: linux
+          #   arch: armhf
+          # - platform: linux
+          #   arch: x86-64
+          # - platform: luci  # luci平台强制使用all架构（源码中定义）
+          #   arch: all
+          # - platform: luci-compat
+          #   arch: all
+          # - platform: openwrt
+          #   arch: arm64
+          # - platform: openwrt
+          #   arch: armhf
+          # - platform: openwrt
+          #   arch: x86-64
 
     steps:
       - name: 拉取代码
@@ -48,7 +48,7 @@ jobs:
           # 基础依赖
           sudo apt-get install -y build-essential libssl-dev rustc cargo npm
           # 补充luci编译所需工具（po2lmo用于翻译文件处理）
-          sudo apt-get install -y gettext
+          # sudo apt-get install -y gettext
 
       - name: 编译SmartDNS
         run: |
