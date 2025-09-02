@@ -1,0 +1,101 @@
+name: 定时编译并发布SmartDNS
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天UTC时间0点执行
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  # 新增：获取版本号
+  get-version:
+    name: 获取版本号
+    runs-on: ubuntu-latest
+    outputs:
+      CUR_VERSION: ${{ steps.get-version.outputs.CUR_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: VERSION_CONTROL  # 从版本控制分支获取
+          fetch-depth: 1
+          path: version_control
+      - name: 提取版本号
+        id: get-version
+        run: |
+          # 从VERSION文件提取前缀和当前版本
+          pre_version=$(grep "PREFEX" version_control/VERSION | sed 's/PREFEX=\(.*\)/\1/')
+          cur_version=$(grep "CUR_VERS" version_control/VERSION | sed 's/CUR_VERS=\(.*\)/\1/')
+          echo "CUR_VERSION=$pre_version$cur_version" >> $GITHUB_OUTPUT
+
+  build:
+    needs: get-version  # 依赖版本号获取
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - platform: debian
+            arch: arm64
+          - platform: debian
+            arch: armhf
+          - platform: debian
+            arch: amd64
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev rustc cargo npm
+
+      - name: 设置版本号
+        run: |
+          # 替换编译脚本中的版本号（根据实际脚本变量名调整）
+          sed -i "s/VER=.*/VER=${{ needs.get-version.outputs.CUR_VERSION }}/" package/build-pkg.sh
+
+      - name: 编译SmartDNS
+        run: |
+          mkdir package/output
+          package/build-pkg.sh \
+            --platform ${{ matrix.platform }} \
+            --arch ${{ matrix.arch }} \
+            --with-ui \
+            --version ${{ needs.get-version.outputs.CUR_VERSION }}  # 传递版本号参数
+          cp package/smartdns* package/output/
+
+      - name: 保存编译产物
+        uses: actions/upload-artifact@v4
+        with:
+          # 产物名称包含版本号，便于识别
+          name: smartdns-${{ matrix.platform }}-${{ matrix.arch }}-${{ needs.get-version.outputs.CUR_VERSION }}
+          path: package/smartdns*
+
+  release:
+    needs: [build, get-version]  # 依赖编译和版本号
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  # 支持手动触发发布
+    steps:
+      - name: 获取当前日期
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: 下载所有编译产物
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: 创建GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # 使用版本号作为标签（更规范）
+          tag_name: v${{ needs.get-version.outputs.CUR_VERSION }}
+          name: 自动构建-${{ needs.get-version.outputs.CUR_VERSION }}-${{ env.DATE }}
+          body: |
+            自动构建版本：${{ needs.get-version.outputs.CUR_VERSION }}
+            构建时间：${{ env.DATE }}
+            提交哈希：${{ github.sha }}
+          # 只发布debian平台的deb包
+          files: ./artifacts/smartdns-debian-*/smartdns*.deb
+          draft: false
+          prerelease: false
