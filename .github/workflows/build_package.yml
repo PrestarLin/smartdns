@@ -12,28 +12,29 @@ jobs:
       matrix:
         # 基础平台和架构组合（排除luci，单独配置）
         include:
-          # - platform: openwrt
-          #   arch: arm64
-          # - platform: openwrt
-          #   arch: armhf
-          # - platform: openwrt
-          #   arch: x86-64
+
           - platform: debian
             arch: arm64
           - platform: debian
             arch: armhf
           - platform: debian
+            arch: amd64
+          - platform: linux
+            arch: arm64
+          - platform: linux
+            arch: armhf
+          - platform: linux
             arch: x86-64
-          # - platform: linux
-          #   arch: arm64
-          # - platform: linux
-          #   arch: armhf
-          # - platform: linux
-          #   arch: x86-64
-          # - platform: luci  # luci平台强制使用all架构（源码中定义）
-          #   arch: all
-          # - platform: luci-compat
-          #   arch: all
+          - platform: luci  # luci平台强制使用all架构（源码中定义）
+            arch: all
+          - platform: luci-compat
+            arch: all
+          - platform: openwrt
+            arch: arm64
+          - platform: openwrt
+            arch: armhf
+          - platform: openwrt
+            arch: x86-64
 
     steps:
       - name: 拉取代码
