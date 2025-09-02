@@ -1,4 +1,4 @@
-name: Docker Image CI with ui
+name: debian deb build
 on:
   workflow_dispatch:
   push:
@@ -30,17 +30,17 @@ jobs:
     strategy:
       matrix:
         include:
-          # - platform: debian
-          #   arch: arm64
-          # - platform: debian
-          #   arch: armhf
+          - platform: debian
+            arch: arm64
+          - platform: debian
+            arch: armhf
           - platform: debian
             arch: amd64
 
         # goarch: [x86_64, aarch64, armv7]
         # bindgen 似乎不支持armv7和powerpc64le
       fail-fast: false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       GOARCH: ${{ matrix.goarch }}
     steps:
@@ -55,8 +55,9 @@ jobs:
           ./package/build-pkg.sh \
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
-            --with-ui          
-          cp package/smartdns* ${{ github.workspace }}/build/
+            --with-ui \
+            --outputdir ${{ github.workspace }}/build/
+          # cp package/smartdns* ${{ github.workspace }}/build/
           # ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --outputdir ${{ github.workspace }}/build/
 
      
@@ -64,7 +65,8 @@ jobs:
         id: tag
         run: |
           cd ${{ github.workspace }}
-          echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
+          # echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
+          echo "release_tag=smartdns_with_ui" >> $GITHUB_OUTPUT
           touch release.txt
           echo "同步更新上游代码" >> release.txt
           echo ${{ github.sha }} >> release.txt
