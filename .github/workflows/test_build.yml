@@ -1,90 +1,82 @@
-name: Debian Build and Release
-
+name: Docker Image CI with ui
 on:
   workflow_dispatch:
   push:
     branches:
-      - main  # 使用 main 替代 master
-
+      - master
+      
 jobs:
   get-version:
-    name: Get latest version
+    name: get latest version number
     runs-on: ubuntu-latest
     outputs:
       CUR_VERSION: ${{steps.get-version.outputs.CUR_VERSION}}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # 获取完整历史记录
-      
-      - name: Extract version
-        id: get-version
-        run: |
-          # 直接从当前仓库获取版本号
-          pre_version=$(grep "PREFEX" VERSION | sed 's/PREFEX=\(.*\)/\1/')
-          cur_version=$(grep "CUR_VERS" VERSION | sed 's/CUR_VERS=\(.*\)/\1/')
+    - uses: actions/checkout@v3
+      with:
+        ref: VERSION_CONTROL
+        fetch-depth: 1
+        path: version_control
+    - name: get version
+      id: get-version
+      run: |
+          #获取当前版本号
+          pre_version=$(cat version_control/VERSION | grep "PREFEX" | sed 's/PREFEX=\(.*\)/\1/')
+          cur_version=$(cat version_control/VERSION | grep "CUR_VERS" | sed 's/CUR_VERS=\(.*\)/\1/')
           echo "CUR_VERSION=$pre_version$cur_version" >> $GITHUB_OUTPUT
 
-  build-debian:
+  build: 
     needs: get-version
     strategy:
       matrix:
-        arch: [amd64, arm64, armhf]
+        include:
+          # - platform: debian
+          #   arch: arm64
+          # - platform: debian
+          #   arch: armhf
+          - platform: debian
+            arch: amd64
+
+        # goarch: [x86_64, aarch64, armv7]
+        # bindgen 似乎不支持armv7和powerpc64le
       fail-fast: false
     runs-on: ubuntu-latest
+    env:
+      GOARCH: ${{ matrix.goarch }}
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup build environment
+      - uses: actions/checkout@v3
+      - name: build-smartdns
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libssl-dev
-          
-      - name: Build SmartDNS Debian package
-        run: |
-          # 设置版本号
-          sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" package/build-pkg.sh
-          
-          # 执行编译
-          mkdir -p build
-          package/build-pkg.sh \
-            --platform debian \
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          cd ${{ github.workspace }}
+          mkdir -p ${{ github.workspace }}/build
+          #修改版本号
+          sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" ${{ github.workspace }}/package/build-pkg.sh
+          ./package/build-pkg.sh \
+            --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
-            --with-ui \
-            --outputdir build
+            --with-ui          
+          cp package/smartdns* ${{ github.workspace }}/build/
+          # ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --outputdir ${{ github.workspace }}/build/
 
-      - name: Rename artifacts
+     
+      - name: general tag and release 
+        id: tag
         run: |
-          cd build
-          # 简化文件名
-          for file in smartdns*.deb; do
-            mv "$file" "${file/-withui/}"
-          done
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: deb-packages
-          path: build/*.deb
-
-  release:
-    needs: [get-version, build-debian]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: deb-packages
-          path: release-packages
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+          cd ${{ github.workspace }}
+          echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
+          touch release.txt
+          echo "同步更新上游代码" >> release.txt
+          echo ${{ github.sha }} >> release.txt
+          echo "status=success" >> $GITHUB_OUTPUT
+      - name: Upload firmware to release
+        uses: softprops/action-gh-release@v1
+        if: steps.tag.outputs.status == 'success'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          tag_name: deb-${{ needs.get-version.outputs.CUR_VERSION }}
-          files: release-packages/*.deb
-          body: |
-            Debian packages for SmartDNS with UI
-            * Version: ${{ needs.get-version.outputs.CUR_VERSION }}
-            * Supported architectures: amd64, arm64, armhf
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
+          files: |
+            ${{ github.workspace }}/build/*
+
