@@ -27,22 +27,22 @@ jobs:
 
   build: 
     # needs: get-version
-    strategy:
-      matrix:
-        include:
-          - platform: debian
-            arch: arm64
-          - platform: debian
-            arch: armhf
-          - platform: debian
-            arch: amd64
+    # strategy:
+    #   matrix:
+    #     include:
+    #       - platform: debian
+    #         arch: arm64
+    #       - platform: debian
+    #         arch: armhf
+    #       - platform: debian
+    #         arch: amd64
 
-        # goarch: [x86_64, aarch64, armv7]
-        # bindgen 似乎不支持armv7和powerpc64le
-      fail-fast: false
+    #     # goarch: [x86_64, aarch64, armv7]
+    #     # bindgen 似乎不支持armv7和powerpc64le
+    #   fail-fast: false
     runs-on: ubuntu-22.04
-    env:
-      GOARCH: ${{ matrix.goarch }}
+    # env:
+    #   GOARCH: ${{ matrix.goarch }}
     steps:
       - uses: actions/checkout@v3
       - name: build-smartdns
