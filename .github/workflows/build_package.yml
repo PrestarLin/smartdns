@@ -52,7 +52,7 @@ jobs:
       - name: 编译SmartDNS
         run: |
           # 执行编译脚本（根据平台和架构）
-          mkdir ./output
+          mkdir -p ./output
           package/build-pkg.sh \
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
@@ -76,7 +76,7 @@ jobs:
       - name: 下载所有编译产物（使用最新版v4）
         uses: actions/download-artifact@v4  # 解决deprecated问题
         with:
-          path: ./output/
+          path: ./artifacts
 
       - name: 创建GitHub Release
         uses: softprops/action-gh-release@v2
@@ -84,7 +84,7 @@ jobs:
           tag_name: auto-build-${{ github.sha }}
           name: 自动构建-${{ env.DATE }}
           body: 自动定时编译的SmartDNS安装包
-          files: ./output/**/*
+          files: ./artifacts/**/*
           draft: false
           prerelease: false
         env:
