@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main  # 使用 main 替代 master
 
 jobs:
   get-version:
@@ -13,16 +13,16 @@ jobs:
     outputs:
       CUR_VERSION: ${{steps.get-version.outputs.CUR_VERSION}}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: VERSION_CONTROL
-          fetch-depth: 1
-          path: version_control
+          fetch-depth: 0  # 获取完整历史记录
+      
       - name: Extract version
         id: get-version
         run: |
-          pre_version=$(cat version_control/VERSION | grep "PREFEX" | sed 's/PREFEX=\(.*\)/\1/')
-          cur_version=$(cat version_control/VERSION | grep "CUR_VERS" | sed 's/CUR_VERS=\(.*\)/\1/')
+          # 直接从当前仓库获取版本号
+          pre_version=$(grep "PREFEX" VERSION | sed 's/PREFEX=\(.*\)/\1/')
+          cur_version=$(grep "CUR_VERS" VERSION | sed 's/CUR_VERS=\(.*\)/\1/')
           echo "CUR_VERSION=$pre_version$cur_version" >> $GITHUB_OUTPUT
 
   build-debian:
@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Setup build environment
         run: |
@@ -46,43 +46,44 @@ jobs:
           sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" package/build-pkg.sh
           
           # 执行编译
+          mkdir -p build
           package/build-pkg.sh \
             --platform debian \
             --arch ${{ matrix.arch }} \
             --with-ui \
-            --outputdir ${{ github.workspace }}/build
-            
+            --outputdir build
+
       - name: Rename artifacts
         run: |
-          cd ${{ github.workspace }}/build
+          cd build
+          # 简化文件名
           for file in smartdns*.deb; do
-            newname="${file/-withui/}"
-            mv "$file" "$newname"
+            mv "$file" "${file/-withui/}"
           done
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deb-packages
-          path: ${{ github.workspace }}/build/*.deb
+          path: build/*.deb
 
   release:
     needs: [get-version, build-debian]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: deb-packages
-          path: ./release-packages
+          path: release-packages
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: deb-${{ needs.get-version.outputs.CUR_VERSION }}
-          files: ./release-packages/*.deb
+          files: release-packages/*.deb
           body: |
             Debian packages for SmartDNS with UI
             * Version: ${{ needs.get-version.outputs.CUR_VERSION }}
