@@ -56,7 +56,7 @@ jobs:
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
             --with-ui \
-            --outputdir ${{ github.workspace }}/build/
+            --outputdir ${{ github.workspace }}/build
           # cp package/smartdns* ${{ github.workspace }}/build/
           # ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --outputdir ${{ github.workspace }}/build/
 
