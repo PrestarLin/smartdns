@@ -10,8 +10,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [debian, openwrt, linux, luci]
-        arch: [x86-64, arm64, armhf]
+        # 基础平台和架构组合（排除luci，单独配置）
+        include:
+          - platform: openwrt
+            arch: arm64
+          - platform: openwrt
+            arch: armhf
+          - platform: openwrt
+            arch: x86-64
+          - platform: debian
+            arch: arm64
+          - platform: debian
+            arch: armhf
+          - platform: debian
+            arch: x86-64
+          - platform: linux
+            arch: arm64
+          - platform: linux
+            arch: armhf
+          - platform: linux
+            arch: x86-64
+          - platform: luci  # luci平台强制使用all架构（源码中定义）
+            arch: all
+          - platform: luci-compat
+            arch: all
 
     steps:
       - name: 拉取代码
@@ -22,21 +44,25 @@ jobs:
       - name: 安装编译依赖
         run: |
           sudo apt-get update
+          # 基础依赖
           sudo apt-get install -y build-essential libssl-dev rustc cargo npm
+          # 补充luci编译所需工具（po2lmo用于翻译文件处理）
+          sudo apt-get install -y gettext
 
       - name: 编译SmartDNS
         run: |
+          # 执行编译脚本（根据平台和架构）
           package/build-pkg.sh \
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
             --with-ui \
             --outputdir ./output
 
-      - name: 保存编译产物
-        uses: actions/upload-artifact@v3
+      - name: 保存编译产物（使用最新版v4）
+        uses: actions/upload-artifact@v4  # 解决deprecated问题
         with:
           name: smartdns-${{ matrix.platform }}-${{ matrix.arch }}
-          path: ./output/*  # 匹配所有类型的产物文件
+          path: ./output/*  # 匹配所有类型产物（.ipk/.deb/.tar.gz等）
 
   release:
     needs: build
@@ -44,10 +70,10 @@ jobs:
     if: github.event_name == 'schedule'
     steps:
       - name: 获取当前日期
-        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV  # 用命令行生成日期
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
-      - name: 下载所有编译产物
-        uses: actions/download-artifact@v3
+      - name: 下载所有编译产物（使用最新版v4）
+        uses: actions/download-artifact@v4  # 解决deprecated问题
         with:
           path: ./artifacts
 
@@ -55,9 +81,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: auto-build-${{ github.sha }}
-          name: 自动构建-${{ env.DATE }}  # 使用环境变量中的日期
+          name: 自动构建-${{ env.DATE }}
           body: 自动定时编译的SmartDNS安装包
-          files: ./artifacts/**/*  # 上传所有产物
+          files: ./artifacts/**/*
           draft: false
           prerelease: false
         env:
