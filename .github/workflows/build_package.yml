@@ -12,28 +12,28 @@ jobs:
       matrix:
         # 基础平台和架构组合（排除luci，单独配置）
         include:
-          - platform: openwrt
-            arch: arm64
-          - platform: openwrt
-            arch: armhf
-          - platform: openwrt
-            arch: x86-64
+          # - platform: openwrt
+          #   arch: arm64
+          # - platform: openwrt
+          #   arch: armhf
+          # - platform: openwrt
+          #   arch: x86-64
           - platform: debian
             arch: arm64
           - platform: debian
             arch: armhf
           - platform: debian
             arch: x86-64
-          - platform: linux
-            arch: arm64
-          - platform: linux
-            arch: armhf
-          - platform: linux
-            arch: x86-64
-          - platform: luci  # luci平台强制使用all架构（源码中定义）
-            arch: all
-          - platform: luci-compat
-            arch: all
+          # - platform: linux
+          #   arch: arm64
+          # - platform: linux
+          #   arch: armhf
+          # - platform: linux
+          #   arch: x86-64
+          # - platform: luci  # luci平台强制使用all架构（源码中定义）
+          #   arch: all
+          # - platform: luci-compat
+          #   arch: all
 
     steps:
       - name: 拉取代码
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4  # 解决deprecated问题
         with:
           name: smartdns-${{ matrix.platform }}-${{ matrix.arch }}
-          path: ./output/*  # 匹配所有类型产物（.ipk/.deb/.tar.gz等）
+          path: ./artifacts/  # 匹配所有类型产物（.ipk/.deb/.tar.gz等）
 
   release:
     needs: build
