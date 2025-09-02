@@ -57,8 +57,10 @@ jobs:
           package/build-pkg.sh \
             --platform ${{ matrix.platform }} \
             --arch ${{ matrix.arch }} \
-            --with-ui \
-            --outputdir ./output
+            --with-ui 
+
+          cp package/smartdns* package/output/
+          
 
       - name: 保存编译产物（使用最新版v4）
         uses: actions/upload-artifact@v4  # 解决deprecated问题
