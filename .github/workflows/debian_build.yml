@@ -67,9 +67,10 @@ jobs:
           cd ${{ github.workspace }}
           # echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
           commit_sha=$(echo ${{ github.sha }} | cut -c1-8)
-          echo "release_tag=${commit_sha}" >> $GITHUB_OUTPUT
+          echo "release_tag=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
           touch release.txt
           echo "smartdns_with_ui" >> release.txt
+          echo "最新构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> release.txt
           echo "同步更新上游代码" >> release.txt
           echo ${{ github.sha }} >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
