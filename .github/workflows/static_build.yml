@@ -80,7 +80,7 @@ jobs:
           # cp ./src/smartdns /workdir/build/smartdns-$GOARCH -a
           # export CFLAGS="-I /workdir/openssl/include -DFEATURE_CHECK_EDNS"
           ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian-edns --static --outputdir ${{ github.workspace }}/build --with-ui
-          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux-edns --static --outputdir ${{ github.workspace }}/build--with-ui
+          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux-edns --static --outputdir ${{ github.workspace }}/build --with-ui
           ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt-edns --static --outputdir ${{ github.workspace }}/build --with-ui
           ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware-edns --static --outputdir ${{ github.workspace }}/build --with-ui
           # cp ./src/smartdns /workdir/build/smartdns-$GOARCH-edns -a
