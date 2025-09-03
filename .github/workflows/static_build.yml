@@ -73,17 +73,17 @@ jobs:
           # cd /workdir
           # export CFLAGS="-I /workdir/openssl/include"
           # export LDFLAGS="-L /workdir/openssl"
-          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian  --with-ui --static --outputdir /workdir/build
-          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --with-ui --static --outputdir /workdir/build
-          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt --with-ui --static --outputdir /workdir/build
-          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware --with-ui --static --outputdir /workdir/build
-          cp ./src/smartdns /workdir/build/smartdns-$GOARCH -a
-          export CFLAGS="-I /workdir/openssl/include -DFEATURE_CHECK_EDNS"
-          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian-edns --static --outputdir /workdir/build --with-ui
-          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux-edns --static --outputdir /workdir/build --with-ui
-          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt-edns --static --outputdir /workdir/build --with-ui
-          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware-edns --static --outputdir /workdir/build --with-ui
-          cp ./src/smartdns /workdir/build/smartdns-$GOARCH-edns -a
+          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian  --with-ui --static --outputdir ${{ github.workspace }}/build
+          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --with-ui --static --outputdir ${{ github.workspace }}/build
+          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt --with-ui --static --outputdir ${{ github.workspace }}/build
+          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware --with-ui --static --outputdir ${{ github.workspace }}/build
+          # cp ./src/smartdns /workdir/build/smartdns-$GOARCH -a
+          # export CFLAGS="-I /workdir/openssl/include -DFEATURE_CHECK_EDNS"
+          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian-edns --static --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux-edns --static --outputdir ${{ github.workspace }}/build--with-ui
+          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt-edns --static --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware-edns --static --outputdir ${{ github.workspace }}/build --with-ui
+          # cp ./src/smartdns /workdir/build/smartdns-$GOARCH-edns -a
           # EOF
           # sed -i 's|\($STRIP\)\s*-d\s*\($CODE_DIR/src/smartdns\)|\1 -s \2|' ./package/build-pkg.sh
           # if [ "$GOARCH" == "armv7l" ] ;then
