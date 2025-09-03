@@ -101,6 +101,7 @@ jobs:
         run: |
           echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
           touch release.txt
+          echo "最新构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> release.txt
           echo "同步更新上游代码" >> release.txt
           echo ${{ github.sha }} >> Release.txt
           echo "status=success" >> $GITHUB_OUTPUT
@@ -135,7 +136,7 @@ jobs:
           #修改版本号
           sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" package/build-pkg.sh
           #单独编译luci和luci-compat
-          ./package/build-pkg.sh --platform $GOARCH --arch all --filearch $GOARCH-all --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform $GOARCH --arch all --filearch $GOARCH-all --outputdir ${{ github.workspace }}/build 
 
 #      - name: Upload To Artifact
 #        uses: actions/upload-artifact@v2
@@ -147,6 +148,7 @@ jobs:
         run: |
           echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
           touch release.txt
+          echo "最新构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> release.txt
           echo "同步更新上游代码" >> release.txt
           echo ${{ github.sha }} >> Release.txt
           echo "status=success" >> $GITHUB_OUTPUT
