@@ -1,4 +1,4 @@
-name: Test Build (new)
+name: auto static build with ui
 
 on:
   push:
@@ -73,10 +73,10 @@ jobs:
           # cd /workdir
           # export CFLAGS="-I /workdir/openssl/include"
           # export LDFLAGS="-L /workdir/openssl"
-          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian  --with-ui --static --outputdir ${{ github.workspace }}/build
-          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux --with-ui --static --outputdir ${{ github.workspace }}/build
-          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt --with-ui --static --outputdir ${{ github.workspace }}/build
-          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware --with-ui --static --outputdir ${{ github.workspace }}/build
+          ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian   --static --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform linux --arch all --filearch $GOARCH-linux  --static --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform openwrt --arch all --filearch $GOARCH-openwrt --static --outputdir ${{ github.workspace }}/build --with-ui
+          ./package/build-pkg.sh --platform optware --arch all --filearch $GOARCH-optware --static --outputdir ${{ github.workspace }}/build --with-ui
           # cp ./src/smartdns /workdir/build/smartdns-$GOARCH -a
           # export CFLAGS="-I /workdir/openssl/include -DFEATURE_CHECK_EDNS"
           ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian-edns --static --outputdir ${{ github.workspace }}/build --with-ui
@@ -135,7 +135,7 @@ jobs:
           #修改版本号
           sed -i "s/VER=.*/VER=${{needs.get-version.outputs.CUR_VERSION}}/" package/build-pkg.sh
           #单独编译luci和luci-compat
-          ./package/build-pkg.sh --platform $GOARCH --arch all --filearch $GOARCH-all --outputdir ${{ github.workspace }}/build
+          ./package/build-pkg.sh --platform $GOARCH --arch all --filearch $GOARCH-all --outputdir ${{ github.workspace }}/build --with-ui
 
 #      - name: Upload To Artifact
 #        uses: actions/upload-artifact@v2
@@ -145,7 +145,7 @@ jobs:
       - name: Generate release tag
         id: tag
         run: |
-          echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}" >> $GITHUB_OUTPUT
+          echo "release_tag=${{needs.get-version.outputs.CUR_VERSION}}_with_ui" >> $GITHUB_OUTPUT
           touch release.txt
           echo "同步更新上游代码" >> release.txt
           echo ${{ github.sha }} >> Release.txt
@@ -181,7 +181,7 @@ jobs:
           cur_version=$(($cur_version + 1))
           sed -i "s/CUR_VERS=.*/CUR_VERS=$cur_version/" VERSION
           git config --local user.email "fake@mail.com"
-          git config --local user.name "PikuZheng"
+          git config --local user.name "PrestarLin"
           git add VERSION
           git commit -m "generate new post from github action" -a
     - name: push changes
