@@ -70,7 +70,7 @@ jobs:
           #  ./Configure no-tests linux-$GOARCH enable-quic enable-ktls no-docs
           # fi
           # make all
-          cd /workdir
+          # cd /workdir
           # export CFLAGS="-I /workdir/openssl/include"
           # export LDFLAGS="-L /workdir/openssl"
           ./package/build-pkg.sh --platform debian --arch all --filearch $GOARCH-debian  --with-ui --static --outputdir /workdir/build
