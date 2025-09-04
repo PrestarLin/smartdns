@@ -2,40 +2,50 @@
 set -e
 
 SERVICE="smartdns"
+# 读取 preinst 保存的状态文件（与 preinst 中定义的路径一致）
+STATE_FILE="/var/run/smartdns-upgrade-state"
 
-# 保存更新前的服务状态（启用状态和运行状态）
-# 仅在“升级”场景下保存（首次安装时无需保存）
-if [ "$1" = "configure" ] && [ -n "$2" ]; then
-    # 保存启用状态（enabled/disabled/masked等）
-    OLD_ENABLED_STATE=$(systemctl is-enabled "$SERVICE" 2>/dev/null || true)
-    # 保存运行状态（active/inactive等）
-    OLD_ACTIVE_STATE=$(systemctl is-active "$SERVICE" 2>/dev/null || true)
-    echo "Saved previous state: enabled=$OLD_ENABLED_STATE, active=$OLD_ACTIVE_STATE"
-fi
-
-# 重新加载systemd配置（使新服务文件生效）
+# 重新加载 systemd 配置（确保新服务文件生效）
 systemctl daemon-reload >/dev/null 2>&1 || true
 
-# 处理服务状态恢复（仅针对升级场景）
-if [ "$1" = "configure" ] && [ -n "$2" ]; then
-    # 恢复启用状态：如果原先是enabled，保持enabled；否则保持原有状态
-    if [ "$OLD_ENABLED_STATE" = "enabled" ]; then
+# 处理升级场景：恢复 preinst 保存的状态
+if [ "$1" = "configure" ] && [ -n "$2" ] && [ -f "$STATE_FILE" ]; then
+    echo "恢复 $SERVICE 升级前的状态..."
+    
+    # 从临时文件读取之前保存的状态
+    . "$STATE_FILE"  # 加载 OLD_ENABLED 和 OLD_ACTIVE 变量
+    
+    # 恢复启用状态
+    if [ "$OLD_ENABLED" = "enabled" ]; then
         systemctl enable "$SERVICE" >/dev/null 2>&1 || true
-    elif [ "$OLD_ENABLED_STATE" = "disabled" ]; then
+        echo "恢复启用状态: enabled"
+    elif [ "$OLD_ENABLED" = "disabled" ]; then
         systemctl disable "$SERVICE" >/dev/null 2>&1 || true
-    fi  # 其他状态（如masked）不主动修改
-
-    # 恢复运行状态：如果原先是active，升级后重启；否则保持停止
-    if [ "$OLD_ACTIVE_STATE" = "active" ]; then
-        systemctl restart "$SERVICE" >/dev/null 2>&1 || true
+        echo "恢复启用状态: disabled"
     else
-        # 原先是停止状态，升级后不启动（但如果是首次安装则不受此限制）
-        :
+        # 其他状态（如 masked、static 等）不主动修改，保持系统默认处理
+        echo "保留原有特殊状态: $OLD_ENABLED"
     fi
+    
+    # 恢复运行状态
+    if [ "$OLD_ACTIVE" = "active" ]; then
+        systemctl restart "$SERVICE" >/dev/null 2>&1 || true
+        echo "服务已重启（原状态为运行中）"
+    else
+        # 原状态为非运行中（如 inactive、failed），不主动启动
+        echo "保留停止状态（原状态为非运行中）"
+    fi
+    
+    # 清理临时状态文件（避免残留）
+    rm -f "$STATE_FILE"
 else
-    # 首次安装场景：默认禁用并停止（可根据需求调整）
-    systemctl disable "$SERVICE" >/dev/null 2>&1 || true
-    systemctl stop "$SERVICE" >/dev/null 2>&1 || true
+    # 处理首次安装场景：默认启用并启动服务（可根据需求调整）
+    if [ "$1" = "configure" ] && [ -z "$2" ]; then
+        echo "首次安装，初始化 $SERVICE 服务..."
+        systemctl enable "$SERVICE" >/dev/null 2>&1 || true
+        systemctl start "$SERVICE" >/dev/null 2>&1 || true
+        echo "服务已默认启用并启动"
+    fi
 fi
 
 exit 0
