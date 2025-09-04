@@ -33,9 +33,9 @@ if [ "$1" = "configure" ] && [ -n "$2" ]; then
         :
     fi
 else
-    # 首次安装场景：默认启用并启动（可根据需求调整）
-    systemctl enable "$SERVICE" >/dev/null 2>&1 || true
-    systemctl start "$SERVICE" >/dev/null 2>&1 || true
+    # 首次安装场景：默认禁用并停止（可根据需求调整）
+    systemctl disable "$SERVICE" >/dev/null 2>&1 || true
+    systemctl stop "$SERVICE" >/dev/null 2>&1 || true
 fi
 
 exit 0
