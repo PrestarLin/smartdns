@@ -1,4 +1,15 @@
 #!/bin/sh
+set -e
 
-systemctl stop smartdns
-systemctl disable smartdns
+SERVICE="smartdns"
+
+# 仅在“卸载”（purge/remove）时停止服务，升级（upgrade）时不停止
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+    if systemctl is-active --quiet "$SERVICE"; then
+        echo "Stopping $SERVICE service (uninstalling)..."
+        systemctl stop "$SERVICE" >/dev/null 2>&1 || true
+    fi
+fi
+
+# 升级时不执行任何停止操作，保留服务状态供preinst捕获
+exit 0
