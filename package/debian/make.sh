@@ -51,6 +51,7 @@ build()
 	sed -i "s/Version:.*/Version: ${pkgver}/" $ROOT/DEBIAN/control
 	sed -i "s/Architecture:.*/Architecture: $ARCH/" $ROOT/DEBIAN/control
 	chmod 0755 $ROOT/DEBIAN/prerm
+    chmod 0755 $ROOT/DEBIAN/postinst
 
 	cp $SMARTDNS_DIR/etc/smartdns/smartdns.conf  $ROOT/etc/smartdns/
 	cp $SMARTDNS_DIR/etc/default/smartdns  $ROOT/etc/default/
