@@ -1,0 +1,30 @@
+#!/bin/sh
+set -e
+
+SERVICE="smartdns"
+# 临时文件用于存储升级前的状态（供 postinst 读取）
+STATE_FILE="/var/run/smartdns-upgrade-state"
+
+# 仅在“升级”场景下执行状态保存（$1 为操作类型，upgrade 表示升级）
+# $2 存在时表示旧版本号，用于区分首次安装（无 $2）
+if [ "$1" = "upgrade" ] && [ -n "$2" ]; then
+    echo "保存 $SERVICE 升级前的状态..."
+    
+    # 创建临时文件目录（确保存在）
+    mkdir -p "$(dirname "$STATE_FILE")"
+    
+    # 保存启用状态（enabled/disabled/masked 等，忽略执行错误）
+    OLD_ENABLED=$(systemctl is-enabled "$SERVICE" 2>/dev/null || true)
+    # 保存运行状态（active/inactive 等，忽略执行错误）
+    OLD_ACTIVE=$(systemctl is-active "$SERVICE" 2>/dev/null || true)
+    
+    # 将状态写入临时文件（格式：键=值）
+    cat > "$STATE_FILE" <<EOF
+OLD_ENABLED=$OLD_ENABLED
+OLD_ACTIVE=$OLD_ACTIVE
+EOF
+    
+    echo "已保存状态：启用=$OLD_ENABLED，运行=$OLD_ACTIVE"
+fi
+
+exit 0
