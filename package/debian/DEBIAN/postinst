@@ -1,23 +1,41 @@
 #!/bin/sh
 set -e
 
-# 服务名称（与 systemd 服务文件一致）
 SERVICE="smartdns"
 
-# 当包处于“配置”阶段（安装/更新时）执行
-if [ "$1" = "configure" ]; then
-    # 重新加载 systemd 配置（确保新服务文件生效）
-    systemctl daemon-reload >/dev/null 2>&1 || true
+# 保存更新前的服务状态（启用状态和运行状态）
+# 仅在“升级”场景下保存（首次安装时无需保存）
+if [ "$1" = "configure" ] && [ -n "$2" ]; then
+    # 保存启用状态（enabled/disabled/masked等）
+    OLD_ENABLED_STATE=$(systemctl is-enabled "$SERVICE" 2>/dev/null || true)
+    # 保存运行状态（active/inactive等）
+    OLD_ACTIVE_STATE=$(systemctl is-active "$SERVICE" 2>/dev/null || true)
+    echo "Saved previous state: enabled=$OLD_ENABLED_STATE, active=$OLD_ACTIVE_STATE"
+fi
 
-    # 启用服务（创建自启动链接）
-    systemctl enable "$SERVICE" >/dev/null 2>&1 || true
+# 重新加载systemd配置（使新服务文件生效）
+systemctl daemon-reload >/dev/null 2>&1 || true
 
-    # 如果服务已运行则重启，未运行则启动
-    if systemctl is-active --quiet "$SERVICE"; then
+# 处理服务状态恢复（仅针对升级场景）
+if [ "$1" = "configure" ] && [ -n "$2" ]; then
+    # 恢复启用状态：如果原先是enabled，保持enabled；否则保持原有状态
+    if [ "$OLD_ENABLED_STATE" = "enabled" ]; then
+        systemctl enable "$SERVICE" >/dev/null 2>&1 || true
+    elif [ "$OLD_ENABLED_STATE" = "disabled" ]; then
+        systemctl disable "$SERVICE" >/dev/null 2>&1 || true
+    fi  # 其他状态（如masked）不主动修改
+
+    # 恢复运行状态：如果原先是active，升级后重启；否则保持停止
+    if [ "$OLD_ACTIVE_STATE" = "active" ]; then
         systemctl restart "$SERVICE" >/dev/null 2>&1 || true
     else
-        systemctl start "$SERVICE" >/dev/null 2>&1 || true
+        # 原先是停止状态，升级后不启动（但如果是首次安装则不受此限制）
+        :
     fi
+else
+    # 首次安装场景：默认启用并启动（可根据需求调整）
+    systemctl enable "$SERVICE" >/dev/null 2>&1 || true
+    systemctl start "$SERVICE" >/dev/null 2>&1 || true
 fi
 
 exit 0
