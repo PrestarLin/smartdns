@@ -103,7 +103,7 @@ jobs:
           touch release.txt
           echo "最新构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> release.txt
           echo "同步更新上游代码" >> release.txt
-          echo ${{ github.sha }} >> Release.txt
+          echo ${{ github.sha }} >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
       - name: Upload firmware to release
         uses: softprops/action-gh-release@v1
@@ -150,7 +150,7 @@ jobs:
           touch release.txt
           echo "最新构建时间: $(date +'%Y-%m-%d %H:%M:%S')" >> release.txt
           echo "同步更新上游代码" >> release.txt
-          echo ${{ github.sha }} >> Release.txt
+          echo ${{ github.sha }} >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
       - name: Upload firmware to release
         uses: softprops/action-gh-release@v1
